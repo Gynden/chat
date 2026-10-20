@@ -4,7 +4,7 @@ O MVP pode rodar em um serviço que execute Docker, como Render ou Railway. Aind
 
 ## Antes de implantar
 
-- Disponibilize o código para o provedor escolhido. Neste momento, os arquivos do projeto estão no workspace e ainda precisam ser enviados a um repositório ou outra origem aceita pelo provedor; selecionar o repositório vazio não publica o MVP.
+- O MVP e os arquivos de implantação estão no branch `main` de `Gynden/chat`. Autorize o acesso desse repositório no provedor escolhido.
 - Use uma conta de hospedagem autorizada e conecte o repositório pela interface do provedor. Não envie senhas, tokens ou chaves pelo chat.
 - Confirme as condições do serviço antes de criar recursos pagos. A criação de recursos com cobrança exige autorização do usuário.
 
@@ -19,6 +19,12 @@ Sem um volume persistente, a prévia pode usar armazenamento temporário, mas co
 Mantenha uma única réplica do aplicativo: este adaptador SQLite ainda não oferece a arquitetura necessária para múltiplas instâncias.
 
 ## Render
+
+O arquivo `render.yaml` configura `ruptura-preview` no plano gratuito, com armazenamento temporário. Use [Deploy to Render](https://render.com/deploy?repo=https://github.com/Gynden/chat), entre na sua conta, autorize acesso ao repositório e confirme a configuração. Esse botão abre a criação do serviço; ele não é uma URL jogável. Após a implantação, o Render fornece a URL pública.
+
+Esse fluxo pelo painel dispensa `RENDER_API_KEY`. A declaração dessa chave nas configurações do ambiente é necessária apenas para automação pela API; não coloque o valor no chat, no repositório ou no serviço do jogo.
+
+Para configurar manualmente:
 
 1. Na conta autorizada, crie um Web Service a partir do repositório que contém o projeto.
 2. Selecione execução por Docker e o `Dockerfile` da raiz. Se o projeto estiver em uma subpasta do repositório, defina essa pasta como diretório raiz do serviço.
