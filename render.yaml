@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: ruptura-preview
+    runtime: docker
+    plan: free
+    numInstances: 1
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /
+    envVars:
+      - key: GAME_DATA_DIR
+        value: /data

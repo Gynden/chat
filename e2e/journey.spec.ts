@@ -1,0 +1,53 @@
+import { test, expect } from "@playwright/test";
+
+test("visitor can train, equip, save the same journey and log back in", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.goto("/");
+  await expect(page.locator("canvas")).toBeVisible();
+  const before = await (await page.request.get("/api/game")).json();
+  expect(before.character.rarity).toBe("Comum");
+  expect(before.player.isGuest).toBe(true);
+  await page.getByRole("button", { name: /Fortalecer/ }).click();
+  await expect(page.getByRole("status")).toContainText("fortalecida");
+  const trained = await (await page.request.get("/api/game")).json();
+  expect(trained.character.trainingLevel).toBe(before.character.trainingLevel + 1);
+  expect(trained.character.stats.attack).toBeGreaterThan(before.character.stats.attack);
+  await page.getByRole("button", { name: /Inventário/ }).click();
+  await page.getByRole("button", { name: "Equipar criatura" }).first().click();
+  await expect(page.getByRole("button", { name: "Equipado", exact: true }).first()).toBeVisible();
+  await page.getByRole("button", { name: "Guarde sua jornada" }).click();
+  await page.getByRole("textbox", { name: "Como devemos te chamar?" }).fill("Explorador de teste");
+  const email = `explorador-${Date.now()}@example.test`;
+  await page.getByRole("textbox", { name: "E-mail", exact: true }).fill(email);
+  await page.getByLabel("Senha", { exact: true }).fill("senha-segura-de-teste");
+  await page.getByRole("button", { name: "Criar conta e guardar jornada" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  const saved = await (await page.request.get("/api/game")).json();
+  expect(saved.player.id).toBe(before.player.id);
+  expect(saved.player.isGuest).toBe(false);
+  expect(saved.character.trainingLevel).toBe(trained.character.trainingLevel);
+  await expect.poll(async () => (await (await page.request.get("/api/game")).json()).area.totalKills, { timeout: 12000 }).toBeGreaterThan(before.area.totalKills);
+  await page.getByRole("button", { name: /Explorador de teste/ }).click();
+  await page.getByRole("button", { name: "Sair da conta" }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  expect((await page.request.get("/api/game")).status()).toBe(401);
+  await page.getByRole("textbox", { name: "E-mail", exact: true }).fill(email);
+  await page.getByLabel("Senha", { exact: true }).fill("senha-segura-de-teste");
+  await page.getByRole("button", { name: "Voltar à jornada" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  expect((await (await page.request.get("/api/game")).json()).player.id).toBe(before.player.id);
+  expect(errors).toEqual([]);
+});
+
+test("mobile expedition fits the screen and navigation works", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await expect(page.locator("canvas")).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByRole("button", { name: "Abrir menu" }).click();
+  await page.getByRole("button", { name: /Inventário/ }).click();
+  await expect(page.getByRole("heading", { name: "Fragmentos da jornada." })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Equipar criatura" }).first()).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
